@@ -24,6 +24,7 @@ import { LoadingSpinner, ErrorMessage } from '@/components/common'
 import { formatDateTime, formatDuration } from '@/lib/utils/date'
 import { formatCurrency } from '@/lib/utils/currency'
 import { formatPhoneNumber } from '@/lib/utils/phone'
+import { isValidUUID } from '@/lib/utils/validation'
 import { extractHighlights, extractClientInfo } from '@/lib/utils/callHighlights'
 import { AudioPlayer } from '@/components/call/AudioPlayer'
 import type { VapiCall } from '@/lib/api/vapi'
@@ -504,8 +505,9 @@ function AnalysisTab({ call }: { call: VapiCall }) {
   
   // If assistant data is not populated, try to fetch it
   const assistantId = call?.assistantId
+  const validAssistantId = assistantId && isValidUUID(assistantId) ? assistantId : null
   const { data: assistantData } = useVapiAssistant(
-    assistantId && !hasAssistantData ? assistantId : undefined
+    validAssistantId && !hasAssistantData ? validAssistantId : undefined
   )
   
   // Try to get model info from multiple sources, prioritizing fetched data
@@ -775,7 +777,7 @@ function AnalysisTab({ call }: { call: VapiCall }) {
         expanded={expandedSections.has('diagnostics')}
         onToggle={() => toggleSection('diagnostics')}
       >
-        <AnalysisInfoRow label="VAPI Call ID" value={call.id || 'N/A'} />
+        <AnalysisInfoRow label="Call ID" value={call.id || 'N/A'} />
         <AnalysisInfoRow label="Assistant ID" value={call.assistantId || 'N/A'} />
         {call.phoneNumberId && (
           <AnalysisInfoRow label="Phone Number ID" value={call.phoneNumberId} />
@@ -1133,8 +1135,9 @@ export default function CallDetailTestScreen() {
 
   // Fetch assistant details if assistantId is available but assistant object is not populated
   const assistantId = call?.assistantId
+  const validAssistantId = assistantId && isValidUUID(assistantId) ? assistantId : null
   const { data: assistantData } = useVapiAssistant(
-    assistantId && !call?.assistant?.name ? assistantId : undefined
+    validAssistantId && !call?.assistant?.name ? validAssistantId : undefined
   )
 
   // Get assistant name from call object or fetched assistant data

@@ -1020,7 +1020,7 @@ function AdvancedTab({
         expanded={expandedSections.has('diagnostics')}
         onToggle={() => toggleSection('diagnostics')}
       >
-        <InfoRow label="VAPI Call ID" value={metadata.vapi_call_id || 'N/A'} />
+        <InfoRow label="Call ID" value={metadata.vapi_call_id || 'N/A'} />
         <InfoRow label="Assistant ID" value={metadata.vapi_assistant_id || 'N/A'} />
         {metadata.vapi_phone_number_id && (
           <InfoRow label="Phone Number ID" value={metadata.vapi_phone_number_id} />

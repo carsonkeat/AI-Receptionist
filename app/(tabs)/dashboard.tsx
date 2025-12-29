@@ -8,29 +8,48 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useVapiCalls } from '@/hooks/useVapi'
 import { useAuthContext } from '@/context/AuthContext'
+import { useProfile, useUserAssistantId } from '@/hooks/useProfile'
 import { useReceptionists } from '@/hooks/useReceptionist'
 import { LoadingSpinner, ErrorMessage } from '@/components/common'
 import { formatCurrency } from '@/lib/utils/currency'
+import { isValidUUID } from '@/lib/utils/validation'
 
 export default function DashboardScreen() {
   const { user } = useAuthContext()
+  const { data: profile } = useProfile()
+  const assistantId = useUserAssistantId()
   const { data: receptionists } = useReceptionists()
   const [refreshing, setRefreshing] = useState(false)
+  
+  // Get the phone number from the first receptionist
+  const phoneNumber = receptionists?.[0]?.phone_number || null
 
-  // Get Trusted KC Receptionist and its assistant ID
-  const trustedKCReceptionist = useMemo(() => {
-    return receptionists?.find(r => 
-      r.name?.toLowerCase().includes('trusted') && 
-      r.name?.toLowerCase().includes('kc')
-    ) || receptionists?.[0]
-  }, [receptionists])
+  // Debug logging
+  React.useEffect(() => {
+    if (__DEV__) {
+      console.log('[Dashboard Debug] Profile:', profile)
+      console.log('[Dashboard Debug] Assistant ID from hook:', assistantId)
+      console.log('[Dashboard Debug] Assistant ID type:', typeof assistantId)
+      console.log('[Dashboard Debug] Assistant ID length:', assistantId?.length)
+      console.log('[Dashboard Debug] Is valid UUID?', assistantId ? isValidUUID(assistantId) : false)
+    }
+  }, [profile, assistantId])
 
-  const assistantId = trustedKCReceptionist?.vapi_assistant_id
+  // Validate assistant ID is a valid UUID before making API call
+  const validAssistantId = assistantId && isValidUUID(assistantId) ? assistantId : null
 
   // Fetch VAPI calls filtered by Trusted KC Assistant ID
   const { data: callsData, isLoading, error, refetch } = useVapiCalls(
-    assistantId ? { assistantId, limit: 1000 } : undefined
+    validAssistantId ? { assistantId: validAssistantId, limit: 1000 } : undefined
   )
+
+  // Debug error logging
+  React.useEffect(() => {
+    if (error && __DEV__) {
+      console.error('[Dashboard Debug] VAPI Error:', error)
+      console.error('[Dashboard Debug] Error details:', JSON.stringify(error, null, 2))
+    }
+  }, [error])
 
   const calls = callsData || []
 
@@ -87,31 +106,33 @@ export default function DashboardScreen() {
     setRefreshing(false)
   }, [refetch])
 
+  const handleCallReceptionist = () => {
+    if (!phoneNumber) {
+      Alert.alert('No Phone Number', 'Phone number is not configured for the receptionist.')
+      return
+    }
+
+    // Format phone number for dialing (ensure it starts with tel:)
+    const phoneUrl = `tel:${phoneNumber.replace(/[^0-9+]/g, '')}`
+    
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(phoneUrl)
+        } else {
+          Alert.alert('Error', 'Phone calls are not supported on this device.')
+        }
+      })
+      .catch((err) => {
+        console.error('Error opening phone dialer:', err)
+        Alert.alert('Error', 'Unable to open phone dialer. Please try again.')
+      })
+  }
+
   // Calculate remaining budget (if you have a budget, otherwise show total cost)
   const totalCost = metrics.total_cost
   const totalCalls = metrics.total_calls
   const totalMinutes = metrics.total_minutes_used.toFixed(1)
-
-  // Get receptionist phone number
-  const receptionist = receptionists?.[0]
-  const phoneNumber = receptionist?.phone_number
-
-  // Handle calling receptionist
-  const handleCallReceptionist = useCallback(async () => {
-    if (!phoneNumber) {
-      Alert.alert('No Phone Number', 'Receptionist phone number is not configured.')
-      return
-    }
-
-    const url = `tel:${phoneNumber}`
-    const supported = await Linking.canOpenURL(url)
-    
-    if (supported) {
-      await Linking.openURL(url)
-    } else {
-      Alert.alert('Error', 'Unable to make phone calls on this device.')
-    }
-  }, [phoneNumber])
 
   return (
     <View style={styles.container}>
@@ -144,11 +165,15 @@ export default function DashboardScreen() {
             <LoadingSpinner />
           ) : error ? (
             <ErrorMessage error={error} onRetry={() => refetch()} />
-          ) : !assistantId ? (
+          ) : !validAssistantId ? (
             <View style={styles.errorContainer}>
               <MaterialCommunityIcons name="alert-circle" size={48} color="#FFFFFF" />
-              <Text style={styles.errorText}>Trusted KC Receptionist not configured</Text>
-              <Text style={styles.errorSubtext}>Please configure a receptionist with a VAPI Assistant ID</Text>
+              <Text style={styles.errorText}>No Assistant Assigned</Text>
+              <Text style={styles.errorSubtext}>
+                {assistantId 
+                  ? 'Please assign a valid UUID format Assistant ID to your profile'
+                  : 'Please assign an Assistant ID to your profile'}
+              </Text>
             </View>
           ) : (
             <>
@@ -209,6 +234,7 @@ export default function DashboardScreen() {
                   </View>
                 </TouchableOpacity>
               )}
+
             </>
           )}
         </ScrollView>

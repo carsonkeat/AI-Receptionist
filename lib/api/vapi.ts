@@ -509,7 +509,18 @@ export const listVapiCalls = async (filters?: {
 }): Promise<VapiCall[]> => {
   const queryParams = new URLSearchParams()
   if (filters?.id) queryParams.append('id', filters.id)
-  if (filters?.assistantId) queryParams.append('assistantId', filters.assistantId)
+  if (filters?.assistantId) {
+    // Debug logging
+    if (__DEV__) {
+      console.log('[VAPI Calls Debug] Assistant ID being sent:', {
+        value: filters.assistantId,
+        type: typeof filters.assistantId,
+        length: filters.assistantId?.length,
+        raw: JSON.stringify(filters.assistantId),
+      })
+    }
+    queryParams.append('assistantId', filters.assistantId)
+  }
   if (filters?.phoneNumberId) queryParams.append('phoneNumberId', filters.phoneNumberId)
   if (filters?.limit) queryParams.append('limit', filters.limit.toString())
   if (filters?.createdAtGt) queryParams.append('createdAtGt', filters.createdAtGt)

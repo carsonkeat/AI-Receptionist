@@ -7,13 +7,13 @@ import { View, Text, StyleSheet, StatusBar, ScrollView, TouchableOpacity } from 
 import { LinearGradient } from 'expo-linear-gradient'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-import { useReceptionists } from '@/hooks/useReceptionist'
+import { useProfile, useUserAssistantId } from '@/hooks/useProfile'
 import { LoadingSpinner, ErrorMessage } from '@/components/common'
 
 export default function AdvancedScreen() {
   const router = useRouter()
-  const { data: receptionists, isLoading, error, refetch } = useReceptionists()
-  const receptionist = receptionists?.[0]
+  const { data: profile, isLoading, error, refetch } = useProfile()
+  const assistantId = useUserAssistantId()
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -23,7 +23,7 @@ export default function AdvancedScreen() {
     return <ErrorMessage error={error} onRetry={() => refetch()} />
   }
 
-  if (!receptionist?.vapi_assistant_id) {
+  if (!assistantId) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" />
@@ -42,7 +42,7 @@ export default function AdvancedScreen() {
           </View>
           <View style={styles.empty}>
             <MaterialCommunityIcons name="alert-circle-outline" size={48} color="rgba(255, 255, 255, 0.7)" />
-            <Text style={styles.emptyText}>No VAPI Assistant ID found</Text>
+            <Text style={styles.emptyText}>No Assistant ID found</Text>
             <Text style={styles.emptySubtext}>Please link an assistant first</Text>
           </View>
         </LinearGradient>
@@ -74,7 +74,7 @@ export default function AdvancedScreen() {
         >
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Assistant Management</Text>
-            <Text style={styles.cardDescription}>Configure and update your VAPI assistant settings</Text>
+            <Text style={styles.cardDescription}>Configure and update your assistant settings</Text>
 
             <TouchableOpacity
               style={styles.menuItem}
@@ -132,7 +132,7 @@ export default function AdvancedScreen() {
           <View style={styles.infoCard}>
             <MaterialCommunityIcons name="information-outline" size={20} color="rgba(255, 255, 255, 0.9)" />
             <Text style={styles.infoText}>
-              Assistant ID: {receptionist.vapi_assistant_id}
+              Assistant ID: {assistantId || 'Not assigned'}
             </Text>
           </View>
         </ScrollView>

@@ -21,10 +21,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useVapiCalls } from '@/hooks/useVapi'
-import { useReceptionists } from '@/hooks/useReceptionist'
+import { useProfile, useUserAssistantId } from '@/hooks/useProfile'
 import { LoadingSpinner, ErrorMessage } from '@/components/common'
 import { formatDate } from '@/lib/utils/date'
 import { formatCurrency } from '@/lib/utils/currency'
+import { isValidUUID } from '@/lib/utils/validation'
 import type { VapiCall } from '@/lib/api/vapi'
 
 const MONTHS = [
@@ -66,21 +67,15 @@ const getDurationMinutes = (call: VapiCall): number => {
 export default function CallsTestScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const { data: receptionists } = useReceptionists()
-  
-  // Get Trusted KC Receptionist and its assistant ID
-  const trustedKCReceptionist = useMemo(() => {
-    return receptionists?.find(r => 
-      r.name?.toLowerCase().includes('trusted') && 
-      r.name?.toLowerCase().includes('kc')
-    ) || receptionists?.[0]
-  }, [receptionists])
+  const { data: profile } = useProfile()
+  const assistantId = useUserAssistantId()
 
-  const assistantId = trustedKCReceptionist?.vapi_assistant_id
+  // Validate assistant ID is a valid UUID before making API call
+  const validAssistantId = assistantId && isValidUUID(assistantId) ? assistantId : null
 
   // Fetch VAPI calls filtered by Trusted KC Assistant ID
   const { data: calls, isLoading, error, refetch } = useVapiCalls(
-    assistantId ? { assistantId, limit: 1000 } : undefined
+    validAssistantId ? { assistantId: validAssistantId, limit: 1000 } : undefined
   )
   
   const [searchText, setSearchText] = useState('')
@@ -185,7 +180,7 @@ export default function CallsTestScreen() {
       >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Calls (test)</Text>
+        <Text style={styles.title}>Calls</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -226,8 +221,8 @@ export default function CallsTestScreen() {
       {!assistantId ? (
         <View style={styles.errorContainer}>
           <MaterialCommunityIcons name="alert-circle" size={48} color="#FFFFFF" />
-          <Text style={styles.errorText}>Trusted KC Receptionist not configured</Text>
-          <Text style={styles.errorSubtext}>Please configure a receptionist with a VAPI Assistant ID</Text>
+          <Text style={styles.errorText}>Assistant not assigned</Text>
+          <Text style={styles.errorSubtext}>Please assign an Assistant ID to your profile</Text>
         </View>
       ) : error && allCalls.length === 0 ? (
         <ErrorMessage error={error} onRetry={() => refetch()} />

@@ -5,6 +5,11 @@
       "expo-router"
     ],
     "name": "AIReceptionist",
-    "slug": "AIReceptionist"
+    "slug": "AIReceptionist",
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/icons/favicon.png"
+    }
   }
 }

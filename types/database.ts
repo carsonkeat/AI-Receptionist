@@ -22,6 +22,7 @@ export interface Database {
           id: string
           account_id: string
           email: string
+          vapi_assistant_id: string | null
           created_at: string
           updated_at: string
         }
@@ -29,6 +30,7 @@ export interface Database {
           id: string
           account_id?: string
           email: string
+          vapi_assistant_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -36,6 +38,7 @@ export interface Database {
           id?: string
           account_id?: string
           email?: string
+          vapi_assistant_id?: string | null
           created_at?: string
           updated_at?: string
         }

@@ -27,7 +27,7 @@ export default function Index() {
     if (user) {
       router.replace('/(tabs)/dashboard')
     } else {
-      router.replace('/(auth)/welcome')
+      router.replace('/(auth)/login')
     }
   }, [navigationState?.key, user, isLoading, router])
 

@@ -107,17 +107,26 @@ export const useAuth = () => {
       const {
         data: { subscription: sub },
       } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (__DEV__) {
+          console.log('[useAuth] Auth state changed:', event, 'Has session:', !!session)
+        }
         setSession(session)
         setUser(session?.user ? { id: session.user.id, email: session.user.email || '' } : null)
         
         // Only navigate on explicit sign in/out events, not on initial session load
         if (event === 'SIGNED_OUT') {
+          if (__DEV__) {
+            console.log('[useAuth] SIGNED_OUT event detected, navigating to login')
+          }
           queryClient.clear()
           // Use setTimeout to avoid navigation conflicts
           setTimeout(() => {
-            router.replace('/(auth)/welcome')
+            router.replace('/(auth)/login')
           }, 100)
         } else if (event === 'SIGNED_IN' && session) {
+          if (__DEV__) {
+            console.log('[useAuth] SIGNED_IN event detected, navigating to dashboard')
+          }
           queryClient.invalidateQueries({ queryKey: ['profile'] })
           // Use setTimeout to avoid navigation conflicts
           setTimeout(() => {
@@ -190,14 +199,52 @@ export const useAuth = () => {
   // Sign out mutation
   const signOutMutation = useMutation({
     mutationFn: async () => {
+      if (__DEV__) {
+        console.log('[useAuth] Sign out mutation started')
+      }
       // Clear stored credentials on sign out
       await clearCredentials()
-      return signOut()
+      if (__DEV__) {
+        console.log('[useAuth] Credentials cleared')
+      }
+      const result = await signOut()
+      if (__DEV__) {
+        console.log('[useAuth] Supabase signOut result:', result)
+      }
+      if (result.error) {
+        throw result.error
+      }
+      return result
     },
     onSuccess: () => {
+      if (__DEV__) {
+        console.log('[useAuth] Sign out success, clearing state')
+      }
       hasAttemptedAutoLogin.current = false
       setIsAttemptingAutoLogin(false)
       queryClient.clear()
+      setUser(null)
+      setSession(null)
+      // The auth state change listener should handle navigation, but add a fallback
+      setTimeout(() => {
+        if (__DEV__) {
+          console.log('[useAuth] Fallback navigation after sign out')
+        }
+        router.replace('/(auth)/login')
+      }, 200)
+    },
+    onError: (error) => {
+      console.error('[useAuth] Sign out error:', error)
+      // Still clear local state even if there's an error
+      hasAttemptedAutoLogin.current = false
+      setIsAttemptingAutoLogin(false)
+      queryClient.clear()
+      setUser(null)
+      setSession(null)
+      // Navigate even on error to ensure user can log back in
+      setTimeout(() => {
+        router.replace('/(auth)/login')
+      }, 200)
     },
   })
 

@@ -87,7 +87,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calls-test"
         options={{
-          title: 'Calls (test)',
+          title: 'Calls',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="phone-in-talk" size={size} color={color} />
           ),

@@ -18,15 +18,14 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-import { useReceptionists } from '@/hooks/useReceptionist'
+import { useProfile, useUserAssistantId } from '@/hooks/useProfile'
 import { useVapiAssistant, useUpdateVapiAssistant } from '@/hooks/useVapi'
 import { LoadingSpinner, ErrorMessage, ExpandableSection } from '@/components/common'
 
 export default function BillingCostControlsScreen() {
   const router = useRouter()
-  const { data: receptionists } = useReceptionists()
-  const receptionist = receptionists?.[0]
-  const assistantId = receptionist?.vapi_assistant_id
+  const { data: profile } = useProfile()
+  const assistantId = useUserAssistantId()
 
   const { data: assistant, isLoading: isLoadingAssistant, error: assistantError } = useVapiAssistant(assistantId)
   const updateMutation = useUpdateVapiAssistant()
@@ -457,7 +456,7 @@ export default function BillingCostControlsScreen() {
               <View style={styles.infoCard}>
                 <MaterialCommunityIcons name="information-outline" size={20} color="rgba(255, 255, 255, 0.9)" />
                 <Text style={styles.infoText}>
-                  Model-specific pricing is configured at the organization level in the VAPI dashboard.
+                  Model-specific pricing is configured at the organization level in the dashboard.
                 </Text>
               </View>
             )}

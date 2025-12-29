@@ -162,23 +162,57 @@ serve(async (req) => {
 
     console.log('Processing webhook - Event:', eventType, 'Assistant:', assistantId, 'Call:', callId)
 
-    // Find receptionist by VAPI assistant ID
-    const { data: receptionist, error: receptionistError } = await supabase
-      .from('receptionists')
-      .select('id, user_id')
+    // Find user profile by VAPI assistant ID
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
       .eq('vapi_assistant_id', assistantId)
       .single()
 
-    if (receptionistError || !receptionist) {
-      console.error('Receptionist not found for assistant:', assistantId, 'Error:', receptionistError)
+    if (profileError || !profile) {
+      console.error('Profile not found for assistant:', assistantId, 'Error:', profileError)
       return new Response(
         JSON.stringify({ 
-          error: 'Receptionist not found', 
+          error: 'User profile not found', 
           assistantId: assistantId,
-          hint: 'Make sure you have linked the VAPI assistant ID to your receptionist record'
+          hint: 'Make sure you have linked the VAPI assistant ID to your user profile'
         }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Get or create receptionist for this user (calls table still uses receptionist_id)
+    // Find existing receptionist for this user
+    let { data: receptionist } = await supabase
+      .from('receptionists')
+      .select('id')
+      .eq('user_id', profile.id)
+      .limit(1)
+      .single()
+
+    // If no receptionist exists, create one
+    if (!receptionist) {
+      const { data: newReceptionist, error: createError } = await supabase
+        .from('receptionists')
+        .insert({
+          user_id: profile.id,
+          name: 'AI Receptionist',
+          status: 'active',
+        })
+        .select('id')
+        .single()
+
+      if (createError || !newReceptionist) {
+        console.error('Failed to create receptionist:', createError)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to create receptionist record',
+            assistantId: assistantId
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      receptionist = newReceptionist
     }
 
     // Handle end-of-call-report events (VAPI's final call event)
