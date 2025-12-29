@@ -1,0 +1,27 @@
+# Supabase Configuration
+# Copy this content to a file named .env in the root directory
+
+# Your Supabase project URL (found in Supabase Dashboard > Settings > API)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+
+# Your Supabase anonymous/public key (found in Supabase Dashboard > Settings > API)
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# VAPI Configuration
+# VAPI Private Key (REQUIRED for creating/updating assistants)
+# Get from: VAPI Dashboard → Settings → API Keys → Copy PRIVATE key
+EXPO_PUBLIC_VAPI_PRIVATE_KEY=your-vapi-private-key-here
+
+# VAPI Public Key (optional, for read-only operations)
+# Get from: VAPI Dashboard → Settings → API Keys → Copy PUBLIC key
+# EXPO_PUBLIC_VAPI_PUBLIC_KEY=your-vapi-public-key-here
+
+# Legacy: If you only have one key, you can use this (will be treated as private)
+# EXPO_PUBLIC_VAPI_API_KEY=your-vapi-key-here
+
+# Optional: Enable logging (set to 'true' to enable)
+EXPO_PUBLIC_ENABLE_LOGGING=false
+
+# Optional: API Environment (development, staging, production)
+EXPO_PUBLIC_API_ENVIRONMENT=development
+
